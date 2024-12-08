@@ -1,0 +1,39 @@
+---
+import NoteCard from "./NoteCard.astro";
+import { Icon } from "astro-icon/components";
+---
+
+<div class="mt-8 mx-3">
+  <div class="grid grid-cols-2 gap-5">
+    <NoteCard />
+    <NoteCard />
+    <NoteCard />
+    <NoteCard />
+    <NoteCard />
+    <NoteCard />
+    <NoteCard />
+    <NoteCard />
+    <NoteCard />
+    <NoteCard />
+    <NoteCard />
+    <NoteCard />
+    <NoteCard />
+    <NoteCard />
+    <NoteCard />
+  </div>
+</div>
+
+<div class="fixed bottom-16 right-8">
+  <div class="relative inline-flex group">
+    <div
+      class="absolute transitiona-all duration-1000 opacity-70 -inset-px bg-gradient-to-r from-[#44BCFF] via-[#FF44EC] to-[#FF675E] rounded-full blur-lg group-hover:opacity-100 group-hover:-inset-1 group-hover:duration-200 animate-tilt"
+    >
+    </div>
+    <button
+      class="relative inline-flex items-center justify-center p-3 text-lg font-bold text-white transition-all duration-200 bg-red-500 font-pj rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+      role="button"
+    >
+      <Icon name="mdi:plus" size={30} />
+    </button>
+  </div>
+</div>
