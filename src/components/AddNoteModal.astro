@@ -1,0 +1,166 @@
+---
+import { Icon } from "astro-icon/components";
+---
+
+<div
+  id="add-note-modal"
+  class="hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+>
+  <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-bold text-gray-800">New Note</h3>
+      <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+        <Icon name="mdi:close" size={24} />
+      </button>
+    </div>
+
+    <form id="add-note-form" class="space-y-4">
+      <div>
+        <label
+          for="note-text"
+          class="block text-sm font-medium text-gray-700 mb-1">Your Note</label
+        >
+        <textarea
+          id="note-text"
+          name="note-text"
+          rows="4"
+          class="w-full rounded-lg border border-gray-200 p-3 text-sm focus:border-purple-300 focus:ring-2 focus:ring-purple-100 resize-none"
+          placeholder="Write your note here..."
+          minlength="10"
+          maxlength="500"
+          required></textarea>
+      </div>
+
+      <div>
+        <label
+          for="said-by"
+          class="block text-sm font-medium text-gray-700 mb-1">Said By</label
+        >
+        <input
+          type="text"
+          id="said-by"
+          name="said-by"
+          class="w-full rounded-lg border border-gray-200 p-3 text-sm focus:border-purple-300 focus:ring-2 focus:ring-purple-100"
+          placeholder="Anonymous"
+        />
+      </div>
+
+      <div class="flex justify-end gap-3 mt-6">
+        <button
+          type="button"
+          id="cancel-note"
+          class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          id="save-note"
+          class="relative px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span id="button-text">Save Note</span>
+          <span
+            id="button-loader"
+            class="absolute inset-0 flex items-center justify-center hidden"
+          >
+            <Icon name="mdi:loading" class="animate-spin" size={20} />
+          </span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const modal = document.getElementById("add-note-modal");
+  const closeBtn = document.getElementById("close-modal");
+  const cancelBtn = document.getElementById("cancel-note");
+  const addNoteForm = document.getElementById("add-note-form") as HTMLFormElement;
+  const saveBtn = document.getElementById("save-note") as HTMLButtonElement;
+  const buttonText = document.getElementById("button-text");
+  const buttonLoader = document.getElementById("button-loader");
+
+  function setLoading(loading: boolean) {
+    if (loading) {
+      saveBtn.disabled = true;
+      buttonText?.classList.add("invisible");
+      buttonLoader?.classList.remove("hidden");
+    } else {
+      saveBtn.disabled = false;
+      buttonText?.classList.remove("invisible");
+      buttonLoader?.classList.add("hidden");
+    }
+  }
+
+  function openModal() {
+    modal?.classList.remove("hidden");
+  }
+
+  function closeModal() {
+    modal?.classList.add("hidden");
+    addNoteForm?.reset();
+    setLoading(false);
+  }
+
+  document.addEventListener("open-add-note-modal", openModal);
+  closeBtn?.addEventListener("click", closeModal);
+  cancelBtn?.addEventListener("click", closeModal);
+
+  modal?.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  addNoteForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const formData = new FormData(addNoteForm);
+    const text = formData.get("note-text");
+    const author = formData.get("said-by") || "Anonymous";
+
+    try {
+      const response = await fetch("/api/notes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text, author }),
+      });
+
+      if (response.ok) {
+        const note = await response.json();
+        const container = document.getElementById("notes-container");
+        const noteCard = createNoteCard(note);
+        container?.insertBefore(noteCard, container.firstChild);
+        closeModal();
+      }
+    } catch (error) {
+      console.error("Error creating note:", error);
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  function createNoteCard(note) {
+    const template = document.createElement('template');
+    template.innerHTML = `
+      <div is="note-card"
+        class="relative block overflow-hidden rounded-xl bg-white border border-gray-100 p-4 sm:p-6 lg:p-8 shadow-lg hover:bg-yellow-50 cursor-pointer"
+        data-note-id="${note.id}"
+        data-liked="false"
+      >
+        <div class="flex flex-col-reverse">
+          <span class="text-xs text-gray-500">${new Date(note.created_at).toLocaleDateString()}</span>
+        </div>
+        <div class="mt-3">
+          <p class="text-pretty text-sm text-gray-700">${note.text}</p>
+        </div>
+        <div class="mt-4 flex gap-4 sm:gap-6 justify-between items-end">
+          <span class="text-sm font-medium text-gray-600">${note.author}</span>
+          <svg class="w-[18px] h-[18px] transition-colors duration-200 text-gray-300" data-astro-icon="mdi:heart"></svg>
+        </div>
+      </div>
+    `.trim();
+    return template.content.firstElementChild;
+  }
+</script>
